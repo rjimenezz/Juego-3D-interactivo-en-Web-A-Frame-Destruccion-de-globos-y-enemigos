@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Componente Movedor</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="movedor.js"></script>
+    
+    <style>
+        .instrucciones {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+        
+        .controles {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="instrucciones">
+        Demostracion del componente Movedor.<br>
+        El cubo se mueve con velocidad constante,<br>
+        cambiando de direccion cada cierto tiempo.
+    </div>
+    
+    <div class="controles">
+        <label for="velocidad">Velocidad: </label>
+        <input type="range" id="velocidad" min="0.1" max="5" step="0.1" value="1"><br>
+        <span id="velocidadValor">1.0</span> unidades/s<br><br>
+        
+        <label for="intervalo">Intervalo: </label>
+        <input type="range" id="intervalo" min="500" max="10000" step="500" value="3000"><br>
+        <span id="intervaloValor">3.0</span> segundos
+    </div>
+
+    <a-scene>
+        <!-- Cubo con el componente movedor -->
+        <a-entity id="cuboMovedor" 
+                  position="0 1 -5"
+                  geometry="primitive: box; width: 1; height: 1; depth: 1"
+                  material="color: #4CC3D9; metalness: 0.3; roughness: 0.4"
+                  movedor="velocidad: 1; intervalo: 3000">
+            
+            <!-- Estela para ver mejor el movimiento -->
+            <a-trail color="#4CC3D9" width="0.1" length="10"></a-trail>
+        </a-entity>
+        
+        <!-- Entorno -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#7BC8A4"></a-plane>
+        <a-sky color="#ECECEC"></a-sky>
+        
+        <!-- Título -->
+        <a-text value="Componente Movedor" 
+                position="0 4 -10" 
+                scale="1.5 1.5 1.5" 
+                color="black" 
+                align="center"></a-text>
+                
+        
+        <!-- Iluminación -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+    
+    <script>
+        // Controles para ajustar velocidad e intervalo en tiempo real
+        document.getElementById('velocidad').addEventListener('input', function(e) {
+            var valor = parseFloat(e.target.value);
+            document.getElementById('velocidadValor').textContent = valor.toFixed(1);
+            document.getElementById('cuboMovedor').setAttribute('movedor', 'velocidad', valor);
+        });
+        
+        document.getElementById('intervalo').addEventListener('input', function(e) {
+            var valor = parseInt(e.target.value);
+            document.getElementById('intervaloValor').textContent = (valor / 1000).toFixed(1);
+            document.getElementById('cuboMovedor').setAttribute('movedor', 'intervalo', valor);
+        });
+    </script>
+</body>
+</html>
