@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Componente Globo</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="globo.js"></script>
+    
+    <style>
+        .instrucciones {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="instrucciones">
+        Demostración del componente Globo.<br>
+        Los globos se destruyen al tocarse entre sí.<br>
+        Observa cómo algunos globos chocan automáticamente.
+    </div>
+
+    <a-scene>
+        <!-- Par de globos que chocarán inmediatamente -->
+        <a-entity id="globo1" position="-2 1 -5" 
+                  globo="color: red; lado: 1">
+        </a-entity>
+        
+        <a-entity id="globo2" position="-0.5 1 -5" 
+                  globo="color: blue; lado: 1.2"
+                  animation="property: position; to: -2 1 -5; dur: 2000; easing: linear">
+        </a-entity>
+        
+        <!-- Globo estático que será golpeado desde arriba -->
+        <a-entity id="globo3" position="2 0.5 -6" 
+                  globo="color: green; lado: 0.8">
+        </a-entity>
+        
+        <!-- Globo que cae desde arriba para chocar con el globo3 -->
+        <a-entity id="globo4" position="2 5 -6" 
+                  globo="color: yellow; lado: 0.9"
+                  animation="property: position; to: 2 0.5 -6; dur: 3000; easing: easeInQuad; delay: 4000">
+        </a-entity>
+        
+        <!-- Globos que chocarán tras moverse en línea recta -->
+        <a-entity id="globo5" position="-4 1 -8" 
+                  globo="color: purple; lado: 1"
+                  animation="property: position; to: 0 1 -8; dur: 5000; easing: linear">
+        </a-entity>
+        
+        <a-entity id="globo6" position="4 1 -8" 
+                  globo="color: cyan; lado: 1"
+                  animation="property: position; to: 0 1 -8; dur: 5000; easing: linear">
+        </a-entity>
+        
+        <!-- Par de globos con trayectorias que se cruzan -->
+        <a-entity id="globo7" position="0 1 -12" 
+                  globo="color: orange; lado: 1.1"
+                  animation="property: position; to: 3 1 -9; dur: 6000; easing: linear; delay: 8000">
+        </a-entity>
+        
+        <a-entity id="globo8" position="3 1 -12" 
+                  globo="color: pink; lado: 0.9"
+                  animation="property: position; to: 0 1 -9; dur: 6000; easing: linear; delay: 8000">
+        </a-entity>
+        
+        <!-- Globo en movimiento circular que chocará con un globo que aparece -->
+        <a-entity id="globo9" position="0 1 -15" 
+                  globo="color: white; lado: 1">
+            <a-animation attribute="position" 
+                       from="0 1 -15" to="3 1 -15" 
+                       dur: 4000; fill="forwards"></a-animation>
+            <a-animation attribute="position" 
+                       from="3 1 -15" to="3 1 -12" 
+                       dur: 4000; delay="4000" fill="forwards"></a-animation>
+            <a-animation attribute="position" 
+                       from="3 1 -12" to="0 1 -12" 
+                       dur: 4000; delay="8000" fill="forwards"></a-animation>
+            <a-animation attribute="position" 
+                       from="0 1 -12" to="0 1 -15" 
+                       dur: 4000; delay="12000" fill="forwards"
+                       repeat="indefinite" repeatDelay="0"></a-animation>
+        </a-entity>
+        
+        <!-- Globo que aparecerá tras unos segundos en la trayectoria del globo9 -->
+        <a-entity id="globo10" position="3 1 -13.5" 
+                  globo="color: lightgreen; lado: 1"
+                  visible="false"
+                  animation__appear="property: visible; to: true; dur: 1; delay: 5000">
+        </a-entity>
+        
+        <!-- Entorno -->
+        <a-plane position="0 0 -10" rotation="-90 0 0" width="30" height="30" color="#AAAAAA"></a-plane>
+        <a-sky color="#EEEEEE"></a-sky>
+        
+        <!-- Título -->
+        <a-text value="Demostración del Componente Globo" 
+                position="0 4 -10" 
+                scale="1.5 1.5 1.5" 
+                color="black" 
+                align="center"></a-text>
+                
+        <!-- Iluminación -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+</body>
+</html>
