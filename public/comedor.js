@@ -3,7 +3,9 @@ AFRAME.registerComponent('comedor', {
   schema: {
     color: { type: 'color', default: 'red' },
     radio: { type: 'number', default: 0.5 },
-    velocidad: { type: 'number', default: 0.01 },  // Velocidad reducida por defecto
+    velocidad: { type: 'number', default: 0.01 },  // Velocidad base
+    velocidadVertical: { type: 'number', default: 0.015 }, // Velocidad para seguir verticalmente
+    distanciaDeteccion: { type: 'number', default: 30 }, // Distancia máxima para detectar al jugador
     retrasoInicial: { type: 'number', default: 2000 } // Retraso antes de activar colisiones (ms)
   },
   
@@ -33,6 +35,12 @@ AFRAME.registerComponent('comedor', {
     // Bandera para indicar si las colisiones están activas
     this.colisionesActivas = false;
     
+    // Para cálculos de movimiento
+    this.direccion = new THREE.Vector3();
+    this.posJugador = new THREE.Vector3();
+    this.posComedor = new THREE.Vector3();
+    this.tempVector = new THREE.Vector3();
+    
     // Agregar el colisionador y listener después de un retraso para evitar falsas colisiones al inicio
     var self = this;
     setTimeout(function() {
@@ -54,25 +62,49 @@ AFRAME.registerComponent('comedor', {
       return;
     }
     
-    // Obtener la posición del jugador y del comedor
-    var posJugador = this.jugador.object3D.position;
-    var posComedor = this.el.object3D.position;
+    // Obtener las posiciones actuales
+    this.jugador.object3D.getWorldPosition(this.posJugador);
+    this.el.object3D.getWorldPosition(this.posComedor);
     
     // Calcular la dirección hacia el jugador
-    var direccion = new THREE.Vector3();
-    direccion.subVectors(posJugador, posComedor).normalize();
+    this.direccion.subVectors(this.posJugador, this.posComedor).normalize();
     
-    // Calcular la nueva posición (mover hacia el jugador)
-    var nuevaPosicion = new THREE.Vector3();
-    nuevaPosicion.copy(posComedor);
-    nuevaPosicion.addScaledVector(direccion, this.data.velocidad);
+    // Calcular la distancia al jugador
+    var distancia = this.posComedor.distanceTo(this.posJugador);
     
-    // Actualizar la posición del comedor
-    this.el.object3D.position.copy(nuevaPosicion);
-    
-    // Hacer que el comedor mire al jugador (solo rotación en Y para mantener orientación vertical)
-    var lookAtPos = new THREE.Vector3(posJugador.x, posComedor.y, posJugador.z);
-    this.el.object3D.lookAt(lookAtPos);
+    // Solo perseguir si está dentro del rango de detección
+    if (distancia <= this.data.distanciaDeteccion) {
+      // Convertir deltaTime a segundos (viene en ms)
+      var deltaSeconds = deltaTime / 1000;
+      
+      // Velocidad base ajustada según distancia (más rápido si está más lejos)
+      var velocidadAjustada = this.data.velocidad * (1 + Math.min(distancia / 10, 2));
+      
+      // Ajustar la velocidad vertical si el jugador está por encima
+      var diferenciaY = this.posJugador.y - this.posComedor.y;
+      
+      // Si el jugador está significativamente más arriba, aumentar la velocidad vertical
+      if (diferenciaY > 0.5) {
+        // Crear un vector de movimiento con énfasis en el componente Y
+        this.tempVector.copy(this.direccion);
+        
+        // Aumentar el componente Y para perseguir mejor hacia arriba
+        this.tempVector.y *= 1 + (diferenciaY * 0.5);
+        this.tempVector.normalize();
+        
+        // Usar velocidad vertical aumentada
+        var velocidadVerticalAjustada = this.data.velocidadVertical * (1 + Math.min(diferenciaY / 3, 3));
+        
+        // Aplicar movimiento con énfasis en vertical
+        this.el.object3D.position.addScaledVector(this.tempVector, velocidadVerticalAjustada * deltaSeconds * 60);
+      } else {
+        // Movimiento normal
+        this.el.object3D.position.addScaledVector(this.direccion, velocidadAjustada * deltaSeconds * 60);
+      }
+      
+      // Hacer que el comedor mire al jugador
+      this.el.object3D.lookAt(this.posJugador);
+    }
   },
   
   handleCollision: function(event) {
