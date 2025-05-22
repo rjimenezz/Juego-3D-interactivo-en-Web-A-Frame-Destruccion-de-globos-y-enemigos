@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Juego con Componente Juego</title>
+    
+    <!-- A-Frame y componentes -->
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="globo.js"></script>
+    <script src="movedor.js"></script>
+    <script src="comedor.js"></script>
+    <script src="destructor.js"></script>
+    <script src="juego.js"></script>
+    
+    <style>
+        .instrucciones {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+        
+        .controles {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="instrucciones">
+        <h3>Instrucciones:</h3>
+        <p>Destruye todos los globos y comedores para ganar.</p>
+        <p>Ten cuidado: los comedores te perseguirán y si te tocan, ¡perderás!</p>
+    </div>
+    
+    <div class="controles">
+        <h3>Controles:</h3>
+        <p>WASD: Movimiento</p>
+        <p>Ratón: Mirar y apuntar</p>
+        <p>Mira a un objetivo para destruirlo</p>
+    </div>
+
+    <a-scene>
+        <!-- Componente juego -->
+        <a-entity id="juego" 
+                  juego="num_globos: 8; 
+                        num_comedores: 4; 
+                        col_globos: #FF5555; 
+                        col_comedores: #FF9900; 
+                        col_jugador: #3399FF; 
+                        tam_globos: 0.8; 
+                        tam_comedores: 0.5; 
+                        tam_jugador: 0.5; 
+                        vel_globos: 1; 
+                        vel_comedores: 0.007; 
+                        intervalo_globos: 3000; 
+                        dir_destructor: 0 0 -1; 
+                        lejos_destructor: 10; 
+                        cerca_destructor: 0">
+        </a-entity>
+        
+        <!-- Entorno -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#7BC8A4"></a-plane>
+        <a-sky color="#ECECEC"></a-sky>
+        
+        <!-- Iluminación -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+</body>
+</html>
