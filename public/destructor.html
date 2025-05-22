@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Componente Destructor</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="destructor.js"></script>
+    
+    <style>
+        .instrucciones {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+        
+        .controles {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="instrucciones">
+        Demostración del componente Destructor.<br>
+        La esfera central emite un rayo que destruye<br>
+        los objetos de la clase "destructible".<br>
+        Usa W/A/S/D para girar el destructor.
+    </div>
+    
+    <div class="controles">
+        <button id="reset">Reiniciar Objetos</button><br><br>
+        <label for="color">Color del rayo: </label>
+        <select id="color">
+            <option value="#FF0000">Rojo</option>
+            <option value="#00FF00">Verde</option>
+            <option value="#0000FF">Azul</option>
+            <option value="#FFFF00">Amarillo</option>
+        </select><br><br>
+        <label for="lejos">Alcance: </label>
+        <input type="range" id="lejos" min="5" max="20" step="1" value="10"><br>
+        <span id="lejosValor">10</span> unidades
+    </div>
+
+    <a-scene>
+        <!-- Entidad con el componente destructor -->
+        <a-entity id="destructor-entity" position="0 1.6 0" rotation="0 0 0">
+            <!-- Esfera para visualizar el origen del destructor -->
+            <a-sphere radius="0.2" color="#FF4444"></a-sphere>
+            
+            <!-- Componente destructor -->
+            <a-entity id="destructor-component"
+                      destructor="objetivo: destructible; 
+                                direccion: 0 0 -1; 
+                                cerca: 0; 
+                                lejos: 10; 
+                                color: #FF0000">
+            </a-entity>
+        </a-entity>
+        
+        <!-- Controles para girar el destructor -->
+        <a-entity id="controles" position="0 1.6 0">
+            <a-entity camera look-controls wasd-controls="fly: true"></a-entity>
+        </a-entity>
+        
+        <!-- Objetos destructibles (con la clase "destructible") -->
+        <a-entity id="objetos-destructibles">
+            <!-- Fila frontal -->
+            <a-box class="destructible" id="cubo1" position="-3 1 -5" 
+                  width="1" height="1" depth="1" 
+                  material="color: #4CC3D9; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <a-box class="destructible" id="cubo2" position="0 1 -5" 
+                  width="1" height="1" depth="1" 
+                  material="color: #EF2D5E; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <a-box class="destructible" id="cubo3" position="3 1 -5" 
+                  width="1" height="1" depth="1" 
+                  material="color: #FFC65D; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <!-- Fila trasera -->
+            <a-box class="destructible" id="cubo4" position="-2 1 -8" 
+                  width="1" height="1" depth="1" 
+                  material="color: #7BC8A4; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <a-box class="destructible" id="cubo5" position="2 1 -8" 
+                  width="1" height="1" depth="1" 
+                  material="color: #BBBBFF; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <!-- Objetos a diferentes alturas -->
+            <a-box class="destructible" id="cubo6" position="-1 3 -6" 
+                  width="1" height="1" depth="1" 
+                  material="color: #FF6B6B; metalness: 0.3; roughness: 0.4">
+            </a-box>
+            
+            <a-box class="destructible" id="cubo7" position="1 3 -6" 
+                  width="1" height="1" depth="1" 
+                  material="color: #66CCFF; metalness: 0.3; roughness: 0.4">
+            </a-box>
+        </a-entity>
+        
+        <!-- Objetos NO destructibles (sin la clase "destructible") -->
+        <a-box id="no-destructible1" position="-4 1 -7" 
+              width="1" height="1" depth="1" 
+              material="color: #333333; metalness: 0.3; roughness: 0.4">
+        </a-box>
+        
+        <a-box id="no-destructible2" position="4 1 -7" 
+              width="1" height="1" depth="1" 
+              material="color: #333333; metalness: 0.3; roughness: 0.4">
+        </a-box>
+        
+        <!-- Entorno -->
+        <a-plane position="0 0 -6" rotation="-90 0 0" width="20" height="20" color="#7BC8A4"></a-plane>
+        <a-sky color="#ECECEC"></a-sky>
+        
+        <!-- Título -->
+        <a-text value="Componente Destructor" 
+                position="0 4 -6" 
+                scale="1.5 1.5 1.5" 
+                color="black" 
+                align="center"></a-text>
+                
+        <!-- Iluminación -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+    
+    <script>
+        // Controles para cambiar propiedades del destructor
+        document.getElementById('color').addEventListener('change', function(e) {
+            var valor = e.target.value;
+            document.getElementById('destructor-component').setAttribute('destructor', 'color', valor);
+        });
+        
+        document.getElementById('lejos').addEventListener('input', function(e) {
+            var valor = parseInt(e.target.value);
+            document.getElementById('lejosValor').textContent = valor;
+            document.getElementById('destructor-component').setAttribute('destructor', 'lejos', valor);
+        });
+        
+        // Botón para reiniciar los objetos
+        document.getElementById('reset').addEventListener('click', function() {
+            // Método más simple y efectivo: recrear los cubos desde cero
+            var contenedor = document.getElementById('objetos-destructibles');
+            
+            // Limpiar el contenedor
+            while (contenedor.firstChild) {
+                contenedor.removeChild(contenedor.firstChild);
+            }
+            
+            // Crear los cubos de nuevo con sus propiedades originales
+            var cubos = [
+                { id: 'cubo1', position: '-3 1 -5', color: '#4CC3D9' },
+                { id: 'cubo2', position: '0 1 -5', color: '#EF2D5E' },
+                { id: 'cubo3', position: '3 1 -5', color: '#FFC65D' },
+                { id: 'cubo4', position: '-2 1 -8', color: '#7BC8A4' },
+                { id: 'cubo5', position: '2 1 -8', color: '#BBBBFF' },
+                { id: 'cubo6', position: '-1 3 -6', color: '#FF6B6B' },
+                { id: 'cubo7', position: '1 3 -6', color: '#66CCFF' }
+            ];
+            
+            // Recrear cada cubo
+            cubos.forEach(function(cubo) {
+                var nuevoCubo = document.createElement('a-box');
+                nuevoCubo.setAttribute('id', cubo.id);
+                nuevoCubo.setAttribute('class', 'destructible');
+                nuevoCubo.setAttribute('position', cubo.position);
+                nuevoCubo.setAttribute('width', 1);
+                nuevoCubo.setAttribute('height', 1);
+                nuevoCubo.setAttribute('depth', 1);
+                nuevoCubo.setAttribute('material', {
+                    color: cubo.color,
+                    metalness: 0.3,
+                    roughness: 0.4
+                });
+                
+                // Añadir el nuevo cubo al contenedor
+                contenedor.appendChild(nuevoCubo);
+            });
+            
+            console.log('Objetos reiniciados correctamente');
+        });
+        
+        // Sincronizar la rotación del destructor con la cámara
+        var destructor = document.getElementById('destructor-entity');
+        var camera = document.querySelector('[camera]');
+        
+        function updateDestructorRotation() {
+            if (camera && destructor) {
+                // Copiar la rotación de la cámara al destructor
+                var rotation = camera.getAttribute('rotation');
+                destructor.setAttribute('rotation', rotation);
+            }
+            
+            // Continuar la actualización
+            requestAnimationFrame(updateDestructorRotation);
+        }
+        
+        // Iniciar la actualización de rotación
+        updateDestructorRotation();
+    </script>
+</body>
+</html>
