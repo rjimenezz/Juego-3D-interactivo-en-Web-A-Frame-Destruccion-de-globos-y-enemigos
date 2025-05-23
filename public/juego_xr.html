@@ -53,6 +53,10 @@
     </div>
 
     <a-scene xr-mode-ui="XRMode: xr">
+        <a-assets>
+            <audio id="sonido_comedor" src="sonido_comedor.mp3"></audio>
+        </a-assets>    
+
         <!-- Componente juego -->
         <a-entity id="juego" 
                   juego="num_globos: 8; 
@@ -64,7 +68,7 @@
                         tam_comedores: 0.5; 
                         tam_jugador: 0.5; 
                         vel_globos: 1; 
-                        vel_comedores: 0.007; 
+                        vel_comedores: 0.04; 
                         intervalo_globos: 3000; 
                         dir_destructor: 0 0 -1; 
                         lejos_destructor: 10; 
