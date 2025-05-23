@@ -5,7 +5,8 @@ AFRAME.registerComponent('comedor', {
     radio: { type: 'number', default: 0.5 },
     velocidad: { type: 'number', default: 0.01 },  // Velocidad constante
     distanciaDeteccion: { type: 'number', default: 50 }, // Distancia máxima para detectar al jugador
-    retrasoInicial: { type: 'number', default: 2000 } // Retraso antes de activar colisiones (ms)
+    retrasoInicial: { type: 'number', default: 2000 }, // Retraso antes de activar colisiones (ms)
+    distanciaSonido: { type: 'number', default: 10 } // Distancia para activar el sonido
   },
   
   init: function() {
@@ -31,6 +32,9 @@ AFRAME.registerComponent('comedor', {
     // Mostrar un efecto de amenaza
     this.crearEfectoAmenaza();
     
+    // Configurar el sonido
+    this.configurarSonido();
+    
     // Bandera para indicar si las colisiones están activas
     this.colisionesActivas = false;
     
@@ -38,6 +42,10 @@ AFRAME.registerComponent('comedor', {
     this.direccion = new THREE.Vector3();
     this.posJugador = new THREE.Vector3();
     this.posComedor = new THREE.Vector3();
+    
+    // Control para reproducción de sonido
+    this.ultimoTiempoSonido = 0;
+    this.intervaloSonido = 3000; // 3 segundos entre sonidos
     
     // Agregar el colisionador y listener después de un retraso para evitar falsas colisiones al inicio
     var self = this;
@@ -52,6 +60,20 @@ AFRAME.registerComponent('comedor', {
       self.colisionesActivas = true;
       console.log("Colisiones activadas para comedor", el.id);
     }, this.data.retrasoInicial);
+  },
+  
+  configurarSonido: function() {
+    // Añadir componente de sonido que reproduce el audio desde assets
+    this.el.setAttribute('sound', {
+      src: '#sonido_comedor',
+      poolSize: 3, // Número de instancias del sonido para evitar limitaciones
+      autoplay: false,
+      loop: false,
+      volume: 0.7,
+      maxDistance: 20,
+      rolloffFactor: 1.5,
+      refDistance: 5
+    });
   },
   
   tick: function(time, deltaTime) {
@@ -69,6 +91,14 @@ AFRAME.registerComponent('comedor', {
     
     // Calcular la distancia al jugador
     var distancia = this.posComedor.distanceTo(this.posJugador);
+    
+    // Reproducir sonido si está cerca y ha pasado suficiente tiempo
+    if (distancia <= this.data.distanciaSonido && time - this.ultimoTiempoSonido > this.intervaloSonido) {
+      if (this.el.components.sound) {
+        this.el.components.sound.playSound();
+        this.ultimoTiempoSonido = time;
+      }
+    }
     
     // Solo perseguir si está dentro del rango de detección
     if (distancia <= this.data.distanciaDeteccion) {
@@ -98,6 +128,12 @@ AFRAME.registerComponent('comedor', {
       
       // Crear efecto de captura
       this.crearEfectoCaptura(otroElemento);
+      
+      // Reproducir sonido de captura a volumen alto
+      if (this.el.components.sound) {
+        this.el.components.sound.data.volume = 1.0;
+        this.el.components.sound.playSound();
+      }
       
       // Eliminar al jugador
       if (otroElemento.parentNode) {
@@ -253,36 +289,6 @@ AFRAME.registerComponent('jugador', {
     // Añadir detector de colisiones
     el.setAttribute('obb-collider', '');
     
-    // Añadir efecto visual para el jugador
-    this.crearEfectoJugador();
   },
   
-  crearEfectoJugador: function() {
-    // Añadir un halo de protección alrededor del jugador
-    var halo = document.createElement('a-entity');
-    
-    halo.setAttribute('geometry', {
-      primitive: 'sphere',
-      radius: this.data.radio * 1.2
-    });
-    
-    halo.setAttribute('material', {
-      color: this.data.color,
-      opacity: 0.2,
-      transparent: true,
-      shader: 'flat'
-    });
-    
-    halo.setAttribute('animation', {
-      property: 'material.opacity',
-      from: 0.2,
-      to: 0.4,
-      dur: 1500,
-      dir: 'alternate',
-      loop: true,
-      easing: 'easeInOutSine'
-    });
-    
-    this.el.appendChild(halo);
-  }
 });
