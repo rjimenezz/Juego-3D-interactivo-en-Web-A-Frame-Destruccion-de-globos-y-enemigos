@@ -45,6 +45,25 @@ AFRAME.registerComponent('destructor', {
         // Crear efecto visual antes de destruir
         this.crearEfectoDestruccion(objetoIntersectado);
         
+        // Determinar tipo del objeto destruido (globo o comedor)
+        var tipo = 'desconocido';
+        if (objetoIntersectado.hasAttribute('globo')) {
+          tipo = 'globo';
+        } else if (objetoIntersectado.hasAttribute('comedor')) {
+          tipo = 'comedor';
+        }
+        
+        // Emitir evento 'destruido' con información sobre el objeto
+        var eventoDestruido = new CustomEvent('destruido', {
+          detail: {
+            id: objetoIntersectado.id,
+            tipo: tipo,
+            posicion: objetoIntersectado.getAttribute('position')
+          }
+        });
+        document.dispatchEvent(eventoDestruido);
+        console.log('Emitido evento destruido para: ' + tipo);
+        
         // Eliminar el objeto
         if (objetoIntersectado.parentNode) {
           objetoIntersectado.parentNode.removeChild(objetoIntersectado);
