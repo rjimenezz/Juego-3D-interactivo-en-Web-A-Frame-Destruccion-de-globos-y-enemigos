@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Juego Completo</title>
+    
+    <!-- A-Frame y componentes -->
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+    <script src="globo.js"></script>
+    <script src="movedor.js"></script>
+    <script src="comedor.js"></script>
+    <script src="destructor.js"></script>
+    <script src="marcador.js"></script>
+    <script src="juego.js"></script>
+    
+    <style>
+        .instrucciones {
+            position: fixed;
+            bottom: 10%;
+            left: 15%;
+            transform: translateY(50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+            border-radius: 5px;
+        }
+        
+        .controles {
+            position: fixed;
+            bottom: 10%;
+            right: 15%;
+            transform: translateY(50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+            border-radius: 5px;
+        }
+        
+        /* Estilo para la vista cenital */
+        #vista-cenital {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 200px;
+            height: 200px;
+            border: 3px solid white;
+            border-radius: 5px;
+            z-index: 999;
+            overflow: hidden;
+            background-color: black;
+        }
+        
+        /* Estilo para el marcador en pantalla */
+        #marcador-hud {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            border-radius: 5px;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Vista cenital y marcador en HUD (sobrepuestos a la escena) -->
+    <div id="vista-cenital"></div>
+    <div id="marcador-hud">Globos destruidos: 0</div>
+
+    <div class="instrucciones">
+        <h3>Instrucciones:</h3>
+        <p>Destruye todos los globos y comedores para ganar.</p>
+        <p>Ten cuidado: los comedores te perseguirán y si te tocan, ¡perderás!</p>
+        <p>El marcador cuenta los globos destruidos.</p>
+    </div>
+    
+    <div class="controles">
+        <h3>Controles:</h3>
+        <p>WASD: Movimiento</p>
+        <p>Ratón: Mirar y apuntar</p>
+        <p>Mira a un objetivo para destruirlo</p>
+    </div>
+
+    <a-scene xr-mode-ui="XRMode: xr">
+        <a-assets>
+            <audio id="sonido_comedor" src="sonido_comedor.mp3"></audio>
+        </a-assets>    
+
+        <!-- Componente juego -->
+        <a-entity id="juego" 
+                  juego="num_globos: 8; 
+                        num_comedores: 4; 
+                        col_globos: #FF5555; 
+                        col_comedores: #FF9900; 
+                        col_jugador: #3399FF; 
+                        tam_globos: 0.8; 
+                        tam_comedores: 0.5; 
+                        tam_jugador: 0.5; 
+                        vel_globos: 1; 
+                        vel_comedores: 0.04; 
+                        intervalo_globos: 3000; 
+                        dir_destructor: 0 0 -1; 
+                        lejos_destructor: 10; 
+                        cerca_destructor: 0">
+        </a-entity>
+        
+        <!-- Cámara jugador con movimiento -->
+        <a-entity movement-controls="fly: true">
+            <a-entity id="camara-principal" 
+                      camera="active: true" 
+                      look-controls 
+                      wasd-controls="fly: true" 
+                      jugador="color: #3399FF; radio: 0.5" 
+                      destructor="objetivo: objetivo-destruible; direccion: 0 0 -1; cerca: 0; lejos: 10; color: #3399FF">
+                <!-- Puntero en el centro de la cámara principal -->
+                <a-entity position="0 0 -1" 
+                          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02" 
+                          material="color: #3399FF; shader: flat; opacity: 0.8">
+                </a-entity>
+            </a-entity>
+        </a-entity>
+        
+        <!-- Cámara cenital para vista superior -->
+        <a-entity id="camara-cenital" 
+                  position="0 35 0" 
+                  rotation="-90 0 0" 
+                  camera="active: false"
+                  look-controls="enabled: false">
+        </a-entity>
+
+        <!-- Entorno -->
+        <a-plane position="0 -2 0" rotation="-90 0 0" width="60" height="60" color="#7BC8A4"></a-plane>
+        <a-sky color="#ECECEC" hide-on-enter-ar></a-sky>
+        
+        <!-- Iluminación -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+    
+    <script>
+        // Configurar la vista cenital usando la API de Canvas
+        document.addEventListener('DOMContentLoaded', function() {
+            // Esperar a que A-Frame esté listo
+            AFRAME.registerComponent('setup-rendering', {
+                init: function() {
+                    // Obtener las cámaras
+                    var camaraPrincipal = document.getElementById('camara-principal').components.camera;
+                    var camaraCenital = document.getElementById('camara-cenital').components.camera;
+                    
+                    // Configurar la cámara cenital
+                    if (camaraCenital && camaraCenital.camera) {
+                        // Crear un renderer para la vista cenital
+                        var cenitRenderer = new THREE.WebGLRenderer({
+                            antialias: true,
+                            alpha: true
+                        });
+                        cenitRenderer.setSize(200, 200);
+                        
+                        // Vincular el renderer al div
+                        document.getElementById('vista-cenital').appendChild(cenitRenderer.domElement);
+                        
+                        // Renderizar la vista cenital en cada frame
+                        var scene = this.el.sceneEl.object3D;
+                        
+                        // Función que se ejecutará en cada frame
+                        function renderCenitView() {
+                            if (camaraCenital && camaraCenital.camera) {
+                                cenitRenderer.render(scene, camaraCenital.camera);
+                            }
+                            requestAnimationFrame(renderCenitView);
+                        }
+                        
+                        // Iniciar el bucle de renderizado
+                        renderCenitView();
+                    }
+                    
+                    // Escucha eventos de destrucción para actualizar el marcador
+                    document.addEventListener('destruido', function(event) {
+                        if (event.detail && event.detail.tipo === 'globo') {
+                            // Obtener el contador actual
+                            var marcadorHUD = document.getElementById('marcador-hud');
+                            var contadorActual = parseInt(marcadorHUD.textContent.match(/\d+/)[0]);
+                            
+                            // Incrementar el contador
+                            contadorActual++;
+                            
+                            // Actualizar el texto
+                            marcadorHUD.textContent = 'Globos destruidos: ' + contadorActual;
+                        }
+                    });
+                }
+            });
+            
+            // Asignar el componente a la escena
+            document.querySelector('a-scene').setAttribute('setup-rendering', '');
+        });
+    </script>
+</body>
+</html>
