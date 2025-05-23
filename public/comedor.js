@@ -3,9 +3,8 @@ AFRAME.registerComponent('comedor', {
   schema: {
     color: { type: 'color', default: 'red' },
     radio: { type: 'number', default: 0.5 },
-    velocidad: { type: 'number', default: 0.01 },  // Velocidad base
-    velocidadVertical: { type: 'number', default: 0.015 }, // Velocidad para seguir verticalmente
-    distanciaDeteccion: { type: 'number', default: 30 }, // Distancia máxima para detectar al jugador
+    velocidad: { type: 'number', default: 0.01 },  // Velocidad constante
+    distanciaDeteccion: { type: 'number', default: 50 }, // Distancia máxima para detectar al jugador
     retrasoInicial: { type: 'number', default: 2000 } // Retraso antes de activar colisiones (ms)
   },
   
@@ -39,7 +38,6 @@ AFRAME.registerComponent('comedor', {
     this.direccion = new THREE.Vector3();
     this.posJugador = new THREE.Vector3();
     this.posComedor = new THREE.Vector3();
-    this.tempVector = new THREE.Vector3();
     
     // Agregar el colisionador y listener después de un retraso para evitar falsas colisiones al inicio
     var self = this;
@@ -77,30 +75,11 @@ AFRAME.registerComponent('comedor', {
       // Convertir deltaTime a segundos (viene en ms)
       var deltaSeconds = deltaTime / 1000;
       
-      // Velocidad base ajustada según distancia (más rápido si está más lejos)
-      var velocidadAjustada = this.data.velocidad * (1 + Math.min(distancia / 10, 2));
+      // Usar velocidad constante independientemente de la distancia o dirección
+      var velocidadConstante = this.data.velocidad;
       
-      // Ajustar la velocidad vertical si el jugador está por encima
-      var diferenciaY = this.posJugador.y - this.posComedor.y;
-      
-      // Si el jugador está significativamente más arriba, aumentar la velocidad vertical
-      if (diferenciaY > 0.5) {
-        // Crear un vector de movimiento con énfasis en el componente Y
-        this.tempVector.copy(this.direccion);
-        
-        // Aumentar el componente Y para perseguir mejor hacia arriba
-        this.tempVector.y *= 1 + (diferenciaY * 0.5);
-        this.tempVector.normalize();
-        
-        // Usar velocidad vertical aumentada
-        var velocidadVerticalAjustada = this.data.velocidadVertical * (1 + Math.min(diferenciaY / 3, 3));
-        
-        // Aplicar movimiento con énfasis en vertical
-        this.el.object3D.position.addScaledVector(this.tempVector, velocidadVerticalAjustada * deltaSeconds * 60);
-      } else {
-        // Movimiento normal
-        this.el.object3D.position.addScaledVector(this.direccion, velocidadAjustada * deltaSeconds * 60);
-      }
+      // Aplicar movimiento con velocidad constante
+      this.el.object3D.position.addScaledVector(this.direccion, velocidadConstante * deltaSeconds * 60);
       
       // Hacer que el comedor mire al jugador
       this.el.object3D.lookAt(this.posJugador);
