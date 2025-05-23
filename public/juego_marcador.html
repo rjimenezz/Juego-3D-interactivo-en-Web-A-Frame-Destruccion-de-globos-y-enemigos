@@ -25,6 +25,7 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
         }
         
         .controles {
@@ -36,6 +37,7 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -77,13 +79,22 @@
                         cerca_destructor: 0">
         </a-entity>
         
-        <!-- Marcador en pantalla -->
-        <a-entity marcador="estilo: pantalla"></a-entity>
+        <!-- Marcador en la escena 3D (posición fija en el mundo) -->
+        <a-entity 
+            id="marcador-mundo"
+            position="0 6 -10"
+            marcador="color: #FFFFFF; 
+                    bgColor: #222222; 
+                    width: 4;
+                    height: 1.2;
+                    escala: 3;
+                    posicion: 0 0 0;
+                    estilo: 3d">
+        </a-entity>
         
         <!-- Camara -->
         <a-entity movement-controls="fly: true">
-            <a-entity camera="active: true" look-controls wasd-controls="fly: true">
-            </a-entity>
+            <a-entity camera="active: true" look-controls wasd-controls="fly: true"></a-entity>
         </a-entity>
 
         <!-- Entorno -->
