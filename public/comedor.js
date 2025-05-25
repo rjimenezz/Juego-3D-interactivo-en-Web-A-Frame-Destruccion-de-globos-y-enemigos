@@ -3,10 +3,7 @@ AFRAME.registerComponent('comedor', {
   schema: {
     color: { type: 'color', default: 'red' },
     radio: { type: 'number', default: 0.5 },
-    velocidad: { type: 'number', default: 0.01 },  // Velocidad constante
-    distanciaDeteccion: { type: 'number', default: 50 }, // Distancia máxima para detectar al jugador
-    retrasoInicial: { type: 'number', default: 2000 }, // Retraso antes de activar colisiones (ms)
-    distanciaSonido: { type: 'number', default: 10 } // Distancia para activar el sonido
+    velocidad: { type: 'number', default: 0.01 }  // Velocidad constante
   },
   
   init: function() {
@@ -29,51 +26,17 @@ AFRAME.registerComponent('comedor', {
     // Buscar al jugador
     this.jugador = document.querySelector('[jugador]');
     
-    // Mostrar un efecto de amenaza
-    this.crearEfectoAmenaza();
-    
-    // Configurar el sonido
-    this.configurarSonido();
-    
-    // Bandera para indicar si las colisiones están activas
-    this.colisionesActivas = false;
-    
     // Para cálculos de movimiento
     this.direccion = new THREE.Vector3();
     this.posJugador = new THREE.Vector3();
     this.posComedor = new THREE.Vector3();
     
-    // Control para reproducción de sonido
-    this.ultimoTiempoSonido = 0;
-    this.intervaloSonido = 3000; // 3 segundos entre sonidos
+    // Añadir detector de colisiones
+    el.setAttribute('obb-collider', '');
     
-    // Agregar el colisionador y listener después de un retraso para evitar falsas colisiones al inicio
-    var self = this;
-    setTimeout(function() {
-      // Añadir detector de colisiones
-      el.setAttribute('obb-collider', '');
-      
-      // Manejar colisiones con el jugador
-      self.colisionHandler = self.handleCollision.bind(self);
-      el.addEventListener('obbcollisionstarted', self.colisionHandler);
-      
-      self.colisionesActivas = true;
-      console.log("Colisiones activadas para comedor", el.id);
-    }, this.data.retrasoInicial);
-  },
-  
-  configurarSonido: function() {
-    // Añadir componente de sonido que reproduce el audio desde assets
-    this.el.setAttribute('sound', {
-      src: '#sonido_comedor',
-      poolSize: 3, // Número de instancias del sonido para evitar limitaciones
-      autoplay: false,
-      loop: false,
-      volume: 0.7,
-      maxDistance: 20,
-      rolloffFactor: 1.5,
-      refDistance: 5
-    });
+    // Manejar colisiones con el jugador
+    this.colisionHandler = this.handleCollision.bind(this);
+    el.addEventListener('obbcollisionstarted', this.colisionHandler);
   },
   
   tick: function(time, deltaTime) {
@@ -89,169 +52,31 @@ AFRAME.registerComponent('comedor', {
     // Calcular la dirección hacia el jugador
     this.direccion.subVectors(this.posJugador, this.posComedor).normalize();
     
-    // Calcular la distancia al jugador
-    var distancia = this.posComedor.distanceTo(this.posJugador);
+    // Convertir deltaTime a segundos (viene en ms)
+    var deltaSeconds = deltaTime / 1000;
     
-    // Reproducir sonido si está cerca y ha pasado suficiente tiempo
-    if (distancia <= this.data.distanciaSonido && time - this.ultimoTiempoSonido > this.intervaloSonido) {
-      if (this.el.components.sound) {
-        this.el.components.sound.playSound();
-        this.ultimoTiempoSonido = time;
-      }
-    }
+    // Usar velocidad constante independientemente de la distancia o dirección
+    var velocidadConstante = this.data.velocidad;
     
-    // Solo perseguir si está dentro del rango de detección
-    if (distancia <= this.data.distanciaDeteccion) {
-      // Convertir deltaTime a segundos (viene en ms)
-      var deltaSeconds = deltaTime / 1000;
-      
-      // Usar velocidad constante independientemente de la distancia o dirección
-      var velocidadConstante = this.data.velocidad;
-      
-      // Aplicar movimiento con velocidad constante
-      this.el.object3D.position.addScaledVector(this.direccion, velocidadConstante * deltaSeconds * 60);
-      
-      // Hacer que el comedor mire al jugador
-      this.el.object3D.lookAt(this.posJugador);
-    }
+    // Aplicar movimiento con velocidad constante
+    this.el.object3D.position.addScaledVector(this.direccion, velocidadConstante * deltaSeconds * 60);
+    
+    // Hacer que el comedor mire al jugador
+    this.el.object3D.lookAt(this.posJugador);
   },
   
   handleCollision: function(event) {
-    // Si las colisiones no están activas aún, ignorar
-    if (!this.colisionesActivas) return;
-    
     // Verificar si la colisión es con el jugador
     var otroElemento = event.detail.withEl;
     
     if (otroElemento && otroElemento.hasAttribute('jugador')) {
       console.log('¡Comedor capturó al jugador!');
       
-      // Crear efecto de captura
-      this.crearEfectoCaptura(otroElemento);
-      
-      // Reproducir sonido de captura a volumen alto
-      if (this.el.components.sound) {
-        this.el.components.sound.data.volume = 1.0;
-        this.el.components.sound.playSound();
-      }
-      
       // Eliminar al jugador
       if (otroElemento.parentNode) {
         otroElemento.parentNode.removeChild(otroElemento);
       }
-      
-      // Mostrar mensaje de fin de juego
-      this.mostrarGameOver();
     }
-  },
-  
-  crearEfectoAmenaza: function() {
-    // Añadir un halo de amenaza alrededor del comedor
-    var halo = document.createElement('a-entity');
-    
-    halo.setAttribute('geometry', {
-      primitive: 'sphere',
-      radius: this.data.radio * 1.2
-    });
-    
-    halo.setAttribute('material', {
-      color: this.data.color,
-      opacity: 0.3,
-      transparent: true,
-      shader: 'flat'
-    });
-    
-    halo.setAttribute('animation', {
-      property: 'material.opacity',
-      from: 0.3,
-      to: 0.1,
-      dur: 1000,
-      dir: 'alternate',
-      loop: true,
-      easing: 'easeInOutSine'
-    });
-    
-    this.el.appendChild(halo);
-  },
-  
-  crearEfectoCaptura: function(jugador) {
-    // Obtener la posición del jugador
-    var posicion = jugador.getAttribute('position');
-    var escena = this.el.sceneEl;
-    
-    // Crear partículas de explosión
-    for (var i = 0; i < 15; i++) {
-      var particula = document.createElement('a-entity');
-      
-      // Posición inicial
-      particula.setAttribute('position', posicion);
-      
-      // Geometría pequeña
-      particula.setAttribute('geometry', {
-        primitive: 'sphere',
-        radius: 0.1
-      });
-      
-      // Material con el color del jugador
-      var colorJugador = jugador.getAttribute('material').color;
-      
-      particula.setAttribute('material', {
-        color: colorJugador,
-        opacity: 0.8,
-        transparent: true
-      });
-      
-      // Animación para expandir la explosión
-      var direccionX = Math.random() * 2 - 1;
-      var direccionY = Math.random() * 2 - 1;
-      var direccionZ = Math.random() * 2 - 1;
-      
-      particula.setAttribute('animation', {
-        property: 'position',
-        to: (posicion.x + direccionX) + ' ' + 
-            (posicion.y + direccionY) + ' ' + 
-            (posicion.z + direccionZ),
-        dur: 1500,
-        easing: 'easeOutQuad'
-      });
-      
-      particula.setAttribute('animation__opacity', {
-        property: 'material.opacity',
-        to: 0,
-        dur: 1500,
-        easing: 'easeOutQuad'
-      });
-      
-      // Añadir partícula a la escena
-      escena.appendChild(particula);
-      
-      // Eliminar partícula después de la animación
-      setTimeout(function(p) {
-        return function() {
-          if (p.parentNode) {
-            p.parentNode.removeChild(p);
-          }
-        };
-      }(particula), 1600);
-    }
-  },
-  
-  mostrarGameOver: function() {
-    // Crear elemento de Game Over
-    var gameOver = document.createElement('div');
-    gameOver.style.position = 'fixed';
-    gameOver.style.top = '50%';
-    gameOver.style.left = '50%';
-    gameOver.style.transform = 'translate(-50%, -50%)';
-    gameOver.style.color = 'red';
-    gameOver.style.fontSize = '5em';
-    gameOver.style.fontWeight = 'bold';
-    gameOver.style.textAlign = 'center';
-    gameOver.style.fontFamily = 'Arial, sans-serif';
-    gameOver.style.zIndex = '9999';
-    gameOver.innerHTML = '¡GAME OVER!<br><button onclick="location.reload()" style="font-size: 0.5em; padding: 10px 20px; margin-top: 20px;">Reiniciar</button>';
-    
-    document.body.appendChild(gameOver);
   },
   
   remove: function() {
@@ -273,7 +98,6 @@ AFRAME.registerComponent('jugador', {
     var data = this.data;
     var el = this.el;
     
-    // Establecer geometría esférica
     el.setAttribute('geometry', {
       primitive: 'sphere',
       radius: data.radio
@@ -288,7 +112,5 @@ AFRAME.registerComponent('jugador', {
     
     // Añadir detector de colisiones
     el.setAttribute('obb-collider', '');
-    
-  },
-  
+  }
 });

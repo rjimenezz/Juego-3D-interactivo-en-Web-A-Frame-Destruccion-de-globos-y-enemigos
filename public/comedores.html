@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
@@ -17,6 +17,7 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
         }
         
         .estadisticas {
@@ -28,6 +29,7 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -47,7 +49,7 @@
         <!-- Jugador (modificado) -->
         <a-entity id="jugador" 
                 jugador="color: #3399FF; radio: 0.5"
-                position="0 1 0"
+                position="0 1 -4"
                 wasd-controls="acceleration: 60">
         </a-entity>
 
@@ -58,25 +60,25 @@
         <a-entity id="comedores">
             <!-- Comedor rápido (rojo) -->
             <a-entity id="comedor1" 
-                      comedor="color: #FF4444; radio: 0.6; velocidad: 0.01; retrasoInicial: 2000"
+                      comedor="color: #FF4444; radio: 0.6; velocidad: 0.01"
                       position="-5 1 -5">
             </a-entity>
             
             <!-- Comedor lento pero grande (naranja) -->
             <a-entity id="comedor2" 
-                      comedor="color: #FF9900; radio: 0.8; velocidad: 0.008; retrasoInicial: 2000"
+                      comedor="color: #FF9900; radio: 0.8; velocidad: 0.008"
                       position="5 1 -5">
             </a-entity>
             
             <!-- Comedor muy rápido pero pequeño (morado) -->
             <a-entity id="comedor3" 
-                      comedor="color: #9900FF; radio: 0.4; velocidad: 0.015; retrasoInicial: 2000"
+                      comedor="color: #9900FF; radio: 0.4; velocidad: 0.015"
                       position="0 1 -10">
             </a-entity>
             
             <!-- Comedor con comportamiento especial (verde) -->
             <a-entity id="comedor4" 
-                      comedor="color: #33CC66; radio: 0.5; velocidad: 0.007; retrasoInicial: 2000"
+                      comedor="color: #33CC66; radio: 0.5; velocidad: 0.007"
                       position="8 1 -8"
                       animation="property: position.y; to: 3; dir: alternate; dur: 4000; loop: true; easing: easeInOutSine">
             </a-entity>
@@ -103,24 +105,5 @@
         <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
     </a-scene>
     
-    <script>
-        // Cronómetro para el tiempo de supervivencia
-        var tiempoInicio = Date.now();
-        var estadisticas = document.getElementById('estadisticas');
-        
-        function actualizarTiempo() {
-            var tiempoActual = Date.now();
-            var segundos = Math.floor((tiempoActual - tiempoInicio) / 1000);
-            estadisticas.textContent = 'Tiempo de supervivencia: ' + segundos + 's';
-            
-            // Continuar actualizando si el jugador sigue vivo
-            if (document.getElementById('jugador')) {
-                requestAnimationFrame(actualizarTiempo);
-            }
-        }
-        
-        // Iniciar el cronómetro
-        actualizarTiempo();
-    </script>
 </body>
 </html>
