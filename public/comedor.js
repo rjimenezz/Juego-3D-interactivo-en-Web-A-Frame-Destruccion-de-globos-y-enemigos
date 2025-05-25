@@ -26,10 +26,17 @@ AFRAME.registerComponent('comedor', {
     // Buscar al jugador
     this.jugador = document.querySelector('[jugador]');
     
+    // Configurar el sonido
+    this.configurarSonido();
+    
     // Para cálculos de movimiento
     this.direccion = new THREE.Vector3();
     this.posJugador = new THREE.Vector3();
     this.posComedor = new THREE.Vector3();
+    
+    // Control para reproducción de sonido
+    this.ultimoTiempoSonido = 0;
+    this.intervaloSonido = 3000; // 3 segundos entre sonidos
     
     // Añadir detector de colisiones
     el.setAttribute('obb-collider', '');
@@ -37,6 +44,20 @@ AFRAME.registerComponent('comedor', {
     // Manejar colisiones con el jugador
     this.colisionHandler = this.handleCollision.bind(this);
     el.addEventListener('obbcollisionstarted', this.colisionHandler);
+  },
+  
+  configurarSonido: function() {
+    // Añadir componente de sonido que reproduce el audio desde assets
+    this.el.setAttribute('sound', {
+      src: '#sonido_comedor',
+      poolSize: 3, // Número de instancias del sonido para evitar limitaciones
+      autoplay: false,
+      loop: false,
+      volume: 0.7,
+      maxDistance: 20,
+      rolloffFactor: 1.5,
+      refDistance: 5
+    });
   },
   
   tick: function(time, deltaTime) {
@@ -51,6 +72,17 @@ AFRAME.registerComponent('comedor', {
     
     // Calcular la dirección hacia el jugador
     this.direccion.subVectors(this.posJugador, this.posComedor).normalize();
+    
+    // Calcular la distancia al jugador
+    var distancia = this.posComedor.distanceTo(this.posJugador);
+    
+    // Reproducir sonido si ha pasado suficiente tiempo
+    if (time - this.ultimoTiempoSonido > this.intervaloSonido) {
+      if (this.el.components.sound) {
+        this.el.components.sound.playSound();
+        this.ultimoTiempoSonido = time;
+      }
+    }
     
     // Convertir deltaTime a segundos (viene en ms)
     var deltaSeconds = deltaTime / 1000;
@@ -71,6 +103,12 @@ AFRAME.registerComponent('comedor', {
     
     if (otroElemento && otroElemento.hasAttribute('jugador')) {
       console.log('¡Comedor capturó al jugador!');
+      
+      // Reproducir sonido de captura a volumen alto
+      if (this.el.components.sound) {
+        this.el.components.sound.data.volume = 1.0;
+        this.el.components.sound.playSound();
+      }
       
       // Eliminar al jugador
       if (otroElemento.parentNode) {
@@ -98,6 +136,7 @@ AFRAME.registerComponent('jugador', {
     var data = this.data;
     var el = this.el;
     
+    // Establecer geometría esférica
     el.setAttribute('geometry', {
       primitive: 'sphere',
       radius: data.radio
