@@ -2,7 +2,7 @@
 AFRAME.registerComponent('movedor', {
     schema: {
       velocidad: { type: 'number', default: 1 },    // Unidades por segundo
-      intervalo: { type: 'number', default: 3000 }  // Milisegundos entre cambios de dirección
+      intervalo: { type: 'number', default: 2000 }  // Milisegundos entre cambios de dirección
     },
     
     init: function() {
@@ -49,13 +49,7 @@ AFRAME.registerComponent('movedor', {
       
       // Normalizar el vector para que la velocidad sea constante
       this.direccion.set(x, y, z).normalize();
-      
-      // Opcional: hacer que el objeto mire en la dirección del movimiento
-      var lookAtPos = new THREE.Vector3();
-      lookAtPos.addVectors(this.el.object3D.position, this.direccion);
-      this.el.object3D.lookAt(lookAtPos);
-      
-      console.log("Nueva dirección:", this.direccion);
+
     },
     
     limitarArea: function(posicion) {

@@ -37,16 +37,6 @@
         El cubo se mueve con velocidad constante,<br>
         cambiando de direccion cada cierto tiempo.
     </div>
-    
-    <div class="controles">
-        <label for="velocidad">Velocidad: </label>
-        <input type="range" id="velocidad" min="0.1" max="5" step="0.1" value="1"><br>
-        <span id="velocidadValor">1.0</span> unidades/s<br><br>
-        
-        <label for="intervalo">Intervalo: </label>
-        <input type="range" id="intervalo" min="500" max="10000" step="500" value="3000"><br>
-        <span id="intervaloValor">3.0</span> segundos
-    </div>
 
     <a-scene>
         <!-- Cubo con el componente movedor -->
@@ -54,7 +44,7 @@
                   position="0 1 -5"
                   geometry="primitive: box; width: 1; height: 1; depth: 1"
                   material="color: #4CC3D9; metalness: 0.3; roughness: 0.4"
-                  movedor="velocidad: 1; intervalo: 3000">
+                  movedor="velocidad: 1; intervalo: 2000">
             
             <!-- Estela para ver mejor el movimiento -->
             <a-trail color="#4CC3D9" width="0.1" length="10"></a-trail>
@@ -76,20 +66,5 @@
         <a-light type="ambient" color="#BBB"></a-light>
         <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
     </a-scene>
-    
-    <script>
-        // Controles para ajustar velocidad e intervalo en tiempo real
-        document.getElementById('velocidad').addEventListener('input', function(e) {
-            var valor = parseFloat(e.target.value);
-            document.getElementById('velocidadValor').textContent = valor.toFixed(1);
-            document.getElementById('cuboMovedor').setAttribute('movedor', 'velocidad', valor);
-        });
-        
-        document.getElementById('intervalo').addEventListener('input', function(e) {
-            var valor = parseInt(e.target.value);
-            document.getElementById('intervaloValor').textContent = (valor / 1000).toFixed(1);
-            document.getElementById('cuboMovedor').setAttribute('movedor', 'intervalo', valor);
-        });
-    </script>
 </body>
 </html>
