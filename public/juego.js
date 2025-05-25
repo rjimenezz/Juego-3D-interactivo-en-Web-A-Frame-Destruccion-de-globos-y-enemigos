@@ -34,8 +34,14 @@ AFRAME.registerComponent('juego', {
     // Victoria prefabricada en el DOM pero oculta
     this.crearElementoVictoria();
     
+    // Derrota prefabricada en el DOM pero oculta
+    this.crearElementoDerrota();
+    
     // Iniciar verificación periódica
     this.iniciarVerificacionPeriodica();
+    
+    // Escuchar evento de jugador eliminado
+    this.configurarDeteccionDerrota();
   },
   
   crearElementoVictoria: function() {
@@ -55,6 +61,25 @@ AFRAME.registerComponent('juego', {
     this.victoriaElement.innerHTML = '¡VICTORIA!<br><button onclick="location.reload()" style="font-size: 0.3em; padding: 10px 20px; margin-top: 20px;">Jugar de nuevo</button>';
     
     document.body.appendChild(this.victoriaElement);
+  },
+  
+  crearElementoDerrota: function() {
+    // Crear elemento de derrota en el DOM pero mantenerlo oculto
+    this.derrotaElement = document.createElement('div');
+    this.derrotaElement.style.position = 'fixed';
+    this.derrotaElement.style.top = '50%';
+    this.derrotaElement.style.left = '50%';
+    this.derrotaElement.style.transform = 'translate(-50%, -50%)';
+    this.derrotaElement.style.color = 'red';
+    this.derrotaElement.style.fontSize = '5em';
+    this.derrotaElement.style.fontWeight = 'bold';
+    this.derrotaElement.style.textAlign = 'center';
+    this.derrotaElement.style.fontFamily = 'Arial, sans-serif';
+    this.derrotaElement.style.zIndex = '9999';
+    this.derrotaElement.style.display = 'none'; // Inicialmente oculto
+    this.derrotaElement.innerHTML = '¡DERROTA!<br><button onclick="location.reload()" style="font-size: 0.3em; padding: 10px 20px; margin-top: 20px;">Intentar de nuevo</button>';
+    
+    document.body.appendChild(this.derrotaElement);
   },
   
   crearContenedor: function() {
@@ -157,8 +182,7 @@ AFRAME.registerComponent('juego', {
       comedor.setAttribute('comedor', {
         color: this.generarColorVariante(this.data.col_comedores),
         radio: this.data.tam_comedores,
-        velocidad: this.data.vel_comedores,
-        retrasoInicial: 2000
+        velocidad: this.data.vel_comedores
       });
       
       contenedorComedores.appendChild(comedor);
@@ -211,25 +235,70 @@ AFRAME.registerComponent('juego', {
     };
   },
   
+  configurarDeteccionDerrota: function() {
+    var self = this;
+    
+    // Monitorear la eliminación del jugador
+    this.jugadorRemovido = false;
+    
+    // Usar MutationObserver para detectar cuando se elimina el jugador
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.removedNodes.length > 0) {
+          for (var i = 0; i < mutation.removedNodes.length; i++) {
+            var nodo = mutation.removedNodes[i];
+            if (nodo.hasAttribute && nodo.hasAttribute('jugador')) {
+              console.log("Jugador eliminado - Derrota");
+              self.mostrarDerrota();
+              self.jugadorRemovido = true;
+            }
+          }
+        }
+      });
+    });
+    
+    // Configurar el observer para monitorear cambios en el DOM
+    observer.observe(document.querySelector('a-scene'), { 
+      childList: true, 
+      subtree: true 
+    });
+    
+    this.observer = observer;
+  },
+  
   iniciarVerificacionPeriodica: function() {
     var self = this;
     
     // Verificar periódicamente por si algún evento no se capturó correctamente
     this.verificacionInterval = setInterval(function() {
+      // Si ya hubo derrota, no hacer nada más
+      if (self.jugadorRemovido) return;
+      
       var globosRestantes = document.querySelectorAll('[globo]').length;
       var comedoresRestantes = document.querySelectorAll('[comedor]').length;
+      var jugadorExiste = document.querySelector('[jugador]') !== null;
       
+      // Verificar derrota por ausencia de jugador
+      if (!jugadorExiste) {
+        console.log("Derrota detectada por verificación periódica");
+        self.mostrarDerrota();
+        clearInterval(self.verificacionInterval);
+        return;
+      }
+      
+      // Verificar victoria
       if (globosRestantes === 0 && comedoresRestantes === 0) {
         console.log("Victoria detectada por verificación periódica");
         self.mostrarVictoria();
-        
-        // Una vez detectada la victoria, detener el interval
         clearInterval(self.verificacionInterval);
       }
     }, 2000); // Verificar cada 2 segundos
   },
   
   verificarFinJuego: function() {
+    // Si ya hubo derrota, no verificar victoria
+    if (this.jugadorRemovido) return;
+    
     var globosRestantes = document.querySelectorAll('[globo]').length;
     var comedoresRestantes = document.querySelectorAll('[comedor]').length;
     
@@ -261,6 +330,28 @@ AFRAME.registerComponent('juego', {
     if (this.verificacionInterval) {
       clearInterval(this.verificacionInterval);
     }
+    
+    // Detener observer
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  },
+  
+  mostrarDerrota: function() {
+    // Mostrar el mensaje de derrota preexistente
+    if (this.derrotaElement) {
+      this.derrotaElement.style.display = 'block';
+    }
+    
+    // Limpiar el intervalo de verificación periódica
+    if (this.verificacionInterval) {
+      clearInterval(this.verificacionInterval);
+    }
+    
+    // Detener observer
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   },
   
   remove: function() {
@@ -277,9 +368,19 @@ AFRAME.registerComponent('juego', {
       clearInterval(this.verificacionInterval);
     }
     
+    // Detener observer
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+    
     // Eliminar el elemento de victoria si existe
     if (this.victoriaElement && this.victoriaElement.parentNode) {
       this.victoriaElement.parentNode.removeChild(this.victoriaElement);
+    }
+    
+    // Eliminar el elemento de derrota si existe
+    if (this.derrotaElement && this.derrotaElement.parentNode) {
+      this.derrotaElement.parentNode.removeChild(this.derrotaElement);
     }
   }
 });

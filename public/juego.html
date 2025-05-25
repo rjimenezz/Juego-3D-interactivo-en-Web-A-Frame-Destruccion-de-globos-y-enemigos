@@ -23,6 +23,7 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
         }
         
         .controles {
@@ -34,6 +35,21 @@
             padding: 10px;
             font-family: Arial, sans-serif;
             z-index: 100;
+            border-radius: 5px;
+        }
+        
+        .estado-juego {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+            border-radius: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -49,6 +65,10 @@
         <p>WASD: Movimiento</p>
         <p>Ratón: Mirar y apuntar</p>
         <p>Mira a un objetivo para destruirlo</p>
+    </div>
+    
+    <div class="estado-juego" id="estado-juego">
+        Destruye todos los objetivos
     </div>
 
     <a-scene>
