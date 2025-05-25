@@ -13,6 +13,7 @@
     <script src="comedor.js"></script>
     <script src="destructor.js"></script>
     <script src="marcador.js"></script>
+    <script src="camrender.js"></script>
     <script src="juego.js"></script>
     
     <style>
@@ -43,7 +44,7 @@
         }
         
         /* Estilo para la vista cenital */
-        #vista-cenital {
+        .vista-cenital-container {
             position: fixed;
             bottom: 20px;
             left: 20px;
@@ -56,25 +57,19 @@
             background-color: black;
         }
         
-        /* Estilo para el marcador en pantalla */
-        #marcador-hud {
-            position: fixed;
-            bottom: 60px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            font-size: 18px;
-            border-radius: 5px;
-            z-index: 999;
+        #camRenderer {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
+        
     </style>
 </head>
 <body>
-    <!-- Vista cenital y marcador en HUD (sobrepuestos a la escena) -->
-    <div id="vista-cenital"></div>
-    <div id="marcador-hud">Globos destruidos: 0</div>
+    <!-- Vista cenital con canvas para camrender -->
+    <div class="vista-cenital-container">
+        <canvas id="camRenderer" width="200" height="200"></canvas>
+    </div>
 
     <div class="instrucciones">
         <h3>Instrucciones:</h3>
@@ -92,7 +87,7 @@
 
     <a-scene xr-mode-ui="XRMode: xr">
         <a-assets>
-            <audio id="sonido_comedor" src="sonido_comedor.mp3"></audio>
+            <audio id="sonido_comedor" src="sonido_comedor.mp3" preload="auto" crossorigin="anonymous"></audio>
         </a-assets>    
 
         <!-- Componente juego -->
@@ -113,18 +108,17 @@
                         cerca_destructor: 0">
         </a-entity>
         
-        <!-- Cámara jugador con movimiento -->
+        <!-- Camara -->
         <a-entity movement-controls="fly: true">
-            <a-entity id="camara-principal" 
-                      camera="active: true" 
-                      look-controls 
-                      wasd-controls="fly: true" 
-                      jugador="color: #3399FF; radio: 0.5" 
-                      destructor="objetivo: objetivo-destruible; direccion: 0 0 -1; cerca: 0; lejos: 10; color: #3399FF">
-                <!-- Puntero en el centro de la cámara principal -->
-                <a-entity position="0 0 -1" 
-                          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02" 
-                          material="color: #3399FF; shader: flat; opacity: 0.8">
+            <a-entity camera="active: true" look-controls wasd-controls="fly: true">
+                <!-- Marcador ligado a la cámara en la esquina inferior derecha -->
+                <a-entity id="marcador" 
+                          marcador="color: #FFFFFF; 
+                                  bgColor: #000000; 
+                                  width: 0.4; 
+                                  height: 0.2; 
+                                  escala: 0.5" 
+                          position="1.4 -0.3 -1">
                 </a-entity>
             </a-entity>
         </a-entity>
@@ -134,6 +128,7 @@
                   position="0 35 0" 
                   rotation="-90 0 0" 
                   camera="active: false"
+                  camrender="cid: camRenderer; width: 200; height: 200"
                   look-controls="enabled: false">
         </a-entity>
 
@@ -145,64 +140,5 @@
         <a-light type="ambient" color="#BBB"></a-light>
         <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
     </a-scene>
-    
-    <script>
-        // Configurar la vista cenital usando la API de Canvas
-        document.addEventListener('DOMContentLoaded', function() {
-            // Esperar a que A-Frame esté listo
-            AFRAME.registerComponent('setup-rendering', {
-                init: function() {
-                    // Obtener las cámaras
-                    var camaraPrincipal = document.getElementById('camara-principal').components.camera;
-                    var camaraCenital = document.getElementById('camara-cenital').components.camera;
-                    
-                    // Configurar la cámara cenital
-                    if (camaraCenital && camaraCenital.camera) {
-                        // Crear un renderer para la vista cenital
-                        var cenitRenderer = new THREE.WebGLRenderer({
-                            antialias: true,
-                            alpha: true
-                        });
-                        cenitRenderer.setSize(200, 200);
-                        
-                        // Vincular el renderer al div
-                        document.getElementById('vista-cenital').appendChild(cenitRenderer.domElement);
-                        
-                        // Renderizar la vista cenital en cada frame
-                        var scene = this.el.sceneEl.object3D;
-                        
-                        // Función que se ejecutará en cada frame
-                        function renderCenitView() {
-                            if (camaraCenital && camaraCenital.camera) {
-                                cenitRenderer.render(scene, camaraCenital.camera);
-                            }
-                            requestAnimationFrame(renderCenitView);
-                        }
-                        
-                        // Iniciar el bucle de renderizado
-                        renderCenitView();
-                    }
-                    
-                    // Escucha eventos de destrucción para actualizar el marcador
-                    document.addEventListener('destruido', function(event) {
-                        if (event.detail && event.detail.tipo === 'globo') {
-                            // Obtener el contador actual
-                            var marcadorHUD = document.getElementById('marcador-hud');
-                            var contadorActual = parseInt(marcadorHUD.textContent.match(/\d+/)[0]);
-                            
-                            // Incrementar el contador
-                            contadorActual++;
-                            
-                            // Actualizar el texto
-                            marcadorHUD.textContent = 'Globos destruidos: ' + contadorActual;
-                        }
-                    });
-                }
-            });
-            
-            // Asignar el componente a la escena
-            document.querySelector('a-scene').setAttribute('setup-rendering', '');
-        });
-    </script>
 </body>
 </html>
